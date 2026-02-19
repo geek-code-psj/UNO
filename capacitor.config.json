@@ -1,0 +1,15 @@
+{
+    "appId": "com.unoarena.app",
+    "appName": "UNO Arena",
+    "webDir": "public",
+    "server": {
+        "androidScheme": "https"
+    },
+    "plugins": {
+        "SplashScreen": {
+            "launchShowDuration": 2000,
+            "backgroundColor": "#0a0a1a",
+            "showSpinner": false
+        }
+    }
+}

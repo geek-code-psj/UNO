@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Play UNO online with friends! Real-time multiplayer card game with leaderboards, tournaments, and cosmetics.">
+  <title>UNO Arena — Multiplayer Card Game</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav">
+    <div class="nav-brand">
+      <div class="logo-icon">🂡</div>
+      UNO Arena
+    </div>
+    <ul class="nav-links">
+      <li><a href="/" class="active" id="nav-lobby">🎮 Lobby</a></li>
+      <li><a href="/offline.html">🤖 Offline</a></li>
+      <li><a href="/rules.html">📖 Rules</a></li>
+      <li><a href="/leaderboard.html" id="nav-leaderboard">🏆 Leaderboard</a></li>
+      <li><a href="/shop.html" id="nav-shop">🛒 Shop</a></li>
+      <li><a href="/tournament.html" id="nav-tournament">⚔️ Tournaments</a></li>
+    </ul>
+    <div class="nav-user" id="nav-user-area">
+      <div class="coins" id="nav-coins"><span>🪙</span> <span id="coin-count">0</span></div>
+      <div class="avatar-badge" id="nav-avatar" title="Profile">🎮</div>
+    </div>
+  </nav>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay hidden" id="auth-modal">
+    <div class="modal">
+      <h2 id="auth-title">Welcome to UNO Arena</h2>
+      <div id="auth-login-form">
+        <div class="form-group input-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="your@email.com">
+        </div>
+        <div class="form-group input-group" style="margin-top:12px">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn btn-primary" style="flex:1" onclick="doLogin()">Login</button>
+          <button class="btn btn-secondary" style="flex:1" onclick="showRegister()">Register</button>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="playAsGuest()">Play as
+          Guest</button>
+      </div>
+      <div id="auth-register-form" class="hidden">
+        <div class="form-group input-group">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="CoolPlayer123" maxlength="20">
+        </div>
+        <div class="form-group input-group" style="margin-top:12px">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="your@email.com">
+        </div>
+        <div class="form-group input-group" style="margin-top:12px">
+          <label>Password (6+ characters)</label>
+          <input type="password" id="reg-password" placeholder="••••••••">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn btn-primary" style="flex:1" onclick="doRegister()">Create Account</button>
+          <button class="btn btn-secondary" style="flex:1" onclick="showLogin()">Back to Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="page-container" id="lobby-page">
+    <div class="lobby-container">
+
+      <!-- Room List -->
+      <div>
+        <div class="page-header">
+          <h1>🎮 Game Lobby</h1>
+          <p>Create a room or join an existing game</p>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="createRoom()">
+            ✨ Create Room
+          </button>
+          <button class="btn btn-success" onclick="createBotGame()"
+            style="background:linear-gradient(135deg,#7c3aed,#a855f7)">
+            🤖 VS Computer
+          </button>
+          <div style="display:flex;gap:8px;flex:1;max-width:300px">
+            <input type="text" id="join-code-input" placeholder="Enter room code..."
+              style="flex:1;text-transform:uppercase">
+            <button class="btn btn-secondary" onclick="joinRoomByCode()">Join</button>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:12px;color:var(--text-secondary);font-size:0.9rem">AVAILABLE ROOMS</h3>
+        <div class="room-list" id="room-list">
+          <div style="text-align:center;padding:40px;color:var(--text-muted)">
+            No rooms available. Create one to start playing!
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <!-- Player stats -->
+        <div class="panel" id="player-stats-panel">
+          <div class="panel-header">
+            <h3>📊 Your Stats</h3>
+            <button class="btn btn-sm btn-secondary" onclick="claimDailyBonus()">🎁 Daily Bonus</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-value" id="stat-wins">0</span>
+              <span class="stat-label">Wins</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-losses">0</span>
+              <span class="stat-label">Losses</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-games">0</span>
+              <span class="stat-label">Games</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-winrate">0%</span>
+              <span class="stat-label">Win Rate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick info -->
+        <div class="panel">
+          <h3 style="margin-bottom:12px">🂡 How to Play</h3>
+          <ul
+            style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:0.85rem;color:var(--text-secondary)">
+            <li>🃏 Match cards by color or number</li>
+            <li>🔄 Reverse, ⛔ Skip, +2 Draw Two</li>
+            <li>🌈 Wild cards change the color</li>
+            <li>🎯 Call UNO when you have 1 card!</li>
+            <li>🏆 Win to earn coins and climb ranks</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waiting Room (shown after creating/joining) -->
+  <div class="page-container hidden" id="waiting-room-page">
+    <div class="waiting-room">
+      <h2>Room Code</h2>
+      <div class="room-code" id="waiting-room-code">ABC123</div>
+      <p style="color:var(--text-secondary)">Share this code with friends to join!</p>
+      <div class="waiting-players" id="waiting-players"></div>
+      <div class="waiting-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <p style="color:var(--text-muted);font-size:0.85rem">Waiting for players...</p>
+
+      <!-- Bot controls (host only) -->
+      <div id="bot-controls" class="hidden"
+        style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <span style="font-size:0.85rem;color:var(--text-secondary);width:100%;text-align:center;margin-bottom:4px">Add
+          AI Opponent:</span>
+        <button class="btn btn-sm btn-secondary" onclick="addBot('easy')" style="border-color:#4ade80">🟢 Easy
+          Bot</button>
+        <button class="btn btn-sm btn-secondary" onclick="addBot('medium')" style="border-color:#facc15">🟡 Medium
+          Bot</button>
+        <button class="btn btn-sm btn-secondary" onclick="addBot('hard')" style="border-color:#ef4444">🔴 Hard
+          Bot</button>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary btn-lg hidden" id="start-game-btn" onclick="startGame()">
+          🚀 Start Game
+        </button>
+        <button class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Page (full game board — replaces lobby when game starts) -->
+  <div class="hidden" id="game-page">
+    <div class="game-container">
+      <div class="game-board">
+        <!-- Opponents -->
+        <div class="opponents-area" id="opponents-area"></div>
+
+        <!-- Center: Draw + Discard -->
+        <div class="center-area">
+          <div class="direction-indicator" id="direction-indicator">↻</div>
+
+          <div class="deck-area">
+            <div class="draw-pile" id="draw-pile" onclick="drawCard()" title="Draw a card">
+              <span class="draw-text">UNO</span>
+              <span class="card-count" id="deck-count">0</span>
+            </div>
+            <span style="font-size:0.75rem;color:var(--text-muted)">Draw Pile</span>
+          </div>
+
+          <div class="deck-area">
+            <div class="discard-pile" id="discard-pile"></div>
+            <span style="font-size:0.75rem;color:var(--text-muted)">Discard</span>
+          </div>
+        </div>
+
+        <!-- Player's hand -->
+        <div class="player-hand-area">
+          <div class="hand-info">
+            <div class="turn-timer">
+              ⏱️ <div class="timer-bar">
+                <div class="timer-fill" id="timer-fill"></div>
+              </div>
+              <span id="timer-seconds">30</span>s
+            </div>
+            <div class="turn-indicator hidden" id="your-turn-indicator">YOUR TURN</div>
+            <div class="game-actions">
+              <button class="btn btn-uno hidden" id="uno-btn" onclick="callUno()">UNO!</button>
+            </div>
+          </div>
+          <div class="hand-container" id="hand-container"></div>
+        </div>
+      </div>
+
+      <!-- Chat panel -->
+      <div class="chat-panel" id="chat-panel">
+        <div class="chat-header">
+          <h3>💬 Chat</h3>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="emoji-bar">
+          <button class="emoji-btn" onclick="sendEmoji('👍')">👍</button>
+          <button class="emoji-btn" onclick="sendEmoji('😂')">😂</button>
+          <button class="emoji-btn" onclick="sendEmoji('😡')">😡</button>
+          <button class="emoji-btn" onclick="sendEmoji('🎉')">🎉</button>
+          <button class="emoji-btn" onclick="sendEmoji('😱')">😱</button>
+          <button class="emoji-btn" onclick="sendEmoji('💪')">💪</button>
+          <button class="emoji-btn" onclick="sendEmoji('🤔')">🤔</button>
+          <button class="emoji-btn" onclick="sendEmoji('❤️')">❤️</button>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Type a message..." maxlength="200"
+            onkeypress="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-sm btn-primary" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Picker Modal (for wild cards) -->
+  <div class="color-picker hidden" id="color-picker">
+    <button class="color-btn red" onclick="chooseColor('red')"></button>
+    <button class="color-btn blue" onclick="chooseColor('blue')"></button>
+    <button class="color-btn green" onclick="chooseColor('green')"></button>
+    <button class="color-btn yellow" onclick="chooseColor('yellow')"></button>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div class="modal-overlay hidden" id="gameover-modal">
+    <div class="modal" style="text-align:center">
+      <h2 id="gameover-title">🎉 Game Over!</h2>
+      <div id="gameover-content"></div>
+      <button class="btn btn-primary btn-lg" style="margin-top:20px" onclick="backToLobby()">Back to Lobby</button>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/game.js"></script>
+  <script src="/js/chat.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => { });
+    }
+  </script>
+</body>
+
+</html>

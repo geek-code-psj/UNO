@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete official UNO rules — card types, power cards, scoring, and strategies.">
+    <title>UNO Arena — Official Rules</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .rules-page {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .rules-page h1 {
+            font-size: 2.2rem;
+            margin-bottom: 6px;
+        }
+
+        .rules-page .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .rule-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .rule-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rule-section h3 {
+            font-size: 1rem;
+            margin: 16px 0 8px;
+            color: var(--primary-light, #a5b4fc);
+        }
+
+        .rule-section p,
+        .rule-section li {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .rule-section ul,
+        .rule-section ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .rule-section li {
+            margin-bottom: 6px;
+        }
+
+        .card-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .card-info {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .card-info .card-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .card-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .card-info p {
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .card-info .card-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .power-card {
+            border-left: 4px solid;
+            padding-left: 16px;
+            margin: 14px 0;
+        }
+
+        .power-card.pc-skip {
+            border-color: #ef4444;
+        }
+
+        .power-card.pc-reverse {
+            border-color: #3b82f6;
+        }
+
+        .power-card.pc-draw2 {
+            border-color: #22c55e;
+        }
+
+        .power-card.pc-wild {
+            border-color: #a855f7;
+        }
+
+        .power-card.pc-wd4 {
+            border-color: #f59e0b;
+        }
+
+        .power-card h4 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .power-card .points-badge {
+            font-size: 0.7rem;
+            background: var(--surface);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: var(--text-muted);
+        }
+
+        .scoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .scoring-table th,
+        .scoring-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .scoring-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .scoring-table td {
+            color: var(--text);
+        }
+
+        .tip-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 14px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .tip-box strong {
+            color: var(--primary-light, #a5b4fc);
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 14px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .warning-box strong {
+            color: #f87171;
+        }
+
+        .quick-ref {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 14px 0;
+        }
+
+        .quick-ref-item {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.82rem;
+            border: 1px solid var(--border);
+        }
+
+        .quick-ref-item .qr-emoji {
+            font-size: 1.4rem;
+        }
+
+        .quick-ref-item .qr-text {
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .quick-ref {
+                grid-template-columns: 1fr;
+            }
+
+            .card-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-brand">
+            <div class="logo-icon">🂡</div>
+            UNO Arena
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">🎮 Lobby</a></li>
+            <li><a href="/offline.html">🤖 Offline</a></li>
+            <li><a href="/rules.html" class="active">📖 Rules</a></li>
+            <li><a href="/leaderboard.html">🏆 Leaderboard</a></li>
+            <li><a href="/shop.html">🛒 Shop</a></li>
+        </ul>
+    </nav>
+
+    <div class="rules-page">
+        <h1>📖 Official UNO Rules</h1>
+        <p class="subtitle">Complete reference guide for all cards, power cards, and gameplay mechanics</p>
+
+        <!-- Quick Reference -->
+        <div class="rule-section">
+            <h2>⚡ Quick Reference</h2>
+            <div class="quick-ref">
+                <div class="quick-ref-item">
+                    <div class="qr-emoji">🃏</div>
+                    <div class="qr-text"><strong>108 cards</strong> in a standard deck</div>
+                </div>
+                <div class="quick-ref-item">
+                    <div class="qr-emoji">👥</div>
+                    <div class="qr-text"><strong>2-10 players</strong> per game</div>
+                </div>
+                <div class="quick-ref-item">
+                    <div class="qr-emoji">🎯</div>
+                    <div class="qr-text"><strong>7 cards</strong> dealt to each player</div>
+                </div>
+                <div class="quick-ref-item">
+                    <div class="qr-emoji">🏆</div>
+                    <div class="qr-text"><strong>First to 0 cards</strong> wins the round</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Deck -->
+        <div class="rule-section">
+            <h2>🂡 The Deck (108 Cards)</h2>
+            <p>The official UNO deck contains exactly 108 cards, broken down as follows:</p>
+
+            <div class="card-gallery">
+                <div class="card-info">
+                    <div class="card-icon">🔢</div>
+                    <h4>Number Cards (0-9)</h4>
+                    <p>Match by color or number. The backbone of UNO — play these to control the active color.</p>
+                    <div class="card-count">76 cards: One 0 + Two of each 1-9 per color</div>
+                </div>
+                <div class="card-info">
+                    <div class="card-icon">⛔</div>
+                    <h4>Skip Cards</h4>
+                    <p>Next player loses their turn completely. Great for blocking opponents near winning.</p>
+                    <div class="card-count">8 cards: 2 per color</div>
+                </div>
+                <div class="card-info">
+                    <div class="card-icon">🔄</div>
+                    <h4>Reverse Cards</h4>
+                    <p>Reverses direction of play. In 2-player games, acts as a Skip card instead.</p>
+                    <div class="card-count">8 cards: 2 per color</div>
+                </div>
+                <div class="card-info">
+                    <div class="card-icon">📥</div>
+                    <h4>Draw Two (+2)</h4>
+                    <p>Next player draws 2 cards AND loses their turn. Cannot be stacked (official rules).</p>
+                    <div class="card-count">8 cards: 2 per color</div>
+                </div>
+                <div class="card-info">
+                    <div class="card-icon">🌈</div>
+                    <h4>Wild Cards</h4>
+                    <p>Can be played on ANY card. Player who plays it declares the next color.</p>
+                    <div class="card-count">4 cards: no color</div>
+                </div>
+                <div class="card-info">
+                    <div class="card-icon">💀</div>
+                    <h4>Wild Draw Four (+4)</h4>
+                    <p>The most powerful card! Changes color + next player draws 4 and loses turn. Special restrictions
+                        apply.</p>
+                    <div class="card-count">4 cards: no color</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Setup -->
+        <div class="rule-section">
+            <h2>🎬 Game Setup</h2>
+            <ol>
+                <li><strong>Shuffle</strong> the entire 108-card deck thoroughly.</li>
+                <li><strong>Deal 7 cards</strong> face-down to each player.</li>
+                <li>Place the remaining cards face-down as the <strong>draw pile</strong>.</li>
+                <li>Flip the <strong>top card</strong> of the draw pile to start the <strong>discard pile</strong>.</li>
+                <li>If the first card is a <strong>Wild Draw Four</strong>, reshuffle and reflip.</li>
+                <li>If the first card is any other action card, its <strong>effect applies</strong> to the first player.
+                </li>
+                <li>The player to the left of the dealer goes first (clockwise).</li>
+            </ol>
+
+            <div class="tip-box">
+                <strong>💡 First Card Rules:</strong> If a Skip is flipped, the first player is skipped. If a Reverse is
+                flipped, the dealer goes first instead. If a Draw Two is flipped, the first player draws 2 and loses
+                their turn. If a Wild is flipped, the first player chooses the color.
+            </div>
+        </div>
+
+        <!-- How to Play -->
+        <div class="rule-section">
+            <h2>🎮 How to Play</h2>
+            <p>On your turn, you must play a card that matches the <strong>top card of the discard pile</strong> by one
+                of these criteria:</p>
+            <ul>
+                <li><strong>Same Color</strong> — Any card matching the active color (e.g., red on red)</li>
+                <li><strong>Same Number</strong> — A number card matching the number (e.g., Blue 7 on Red 7)</li>
+                <li><strong>Same Symbol</strong> — An action card matching the type (e.g., Skip on Skip, regardless of
+                    color)</li>
+                <li><strong>Wild Card</strong> — Can always be played regardless of what's on top</li>
+            </ul>
+
+            <h3>If You Can't Play</h3>
+            <ol>
+                <li><strong>Draw one card</strong> from the draw pile.</li>
+                <li>If the drawn card can be played, you <strong>may play it immediately</strong>.</li>
+                <li>If not (or you choose not to), your <strong>turn ends</strong>.</li>
+            </ol>
+
+            <div class="warning-box">
+                <strong>⚠️ Draw Pile Empty?</strong> When the draw pile runs out, the discard pile (except the top card)
+                is shuffled and becomes the new draw pile. Play continues normally.
+            </div>
+        </div>
+
+        <!-- Power Cards (Detailed) -->
+        <div class="rule-section">
+            <h2>⚡ Power Cards — Complete Guide</h2>
+            <p>Power cards (also called action cards) are the heart of UNO strategy. Here are the complete official
+                rules for each:</p>
+
+            <div class="power-card pc-skip">
+                <h4>⛔ Skip Card <span class="points-badge">20 points</span></h4>
+                <p><strong>Effect:</strong> The next player in turn order is completely <strong>skipped</strong>. They
+                    do not play or draw. Play passes to the player after them.</p>
+                <p><strong>When to play:</strong> Match by color, or play on another Skip card of any color.</p>
+                <p><strong>Strategy tip:</strong> Save Skip cards to block opponents who are close to winning (have 1-2
+                    cards left). Playing a Skip when the next player has 1 card prevents them from going out!</p>
+            </div>
+
+            <div class="power-card pc-reverse">
+                <h4>🔄 Reverse Card <span class="points-badge">20 points</span></h4>
+                <p><strong>Effect:</strong> Reverses the direction of play. If play was going clockwise, it now goes
+                    counter-clockwise, and vice versa.</p>
+                <p><strong>2-Player Special Rule:</strong> In a 2-player game, Reverse acts exactly like a <strong>Skip
+                        card</strong> — the other player loses their turn and you play again.</p>
+                <p><strong>When to play:</strong> Match by color, or play on another Reverse card of any color.</p>
+                <p><strong>Strategy tip:</strong> Use Reverse strategically to give yourself more turns or to prevent a
+                    dangerous player from playing. In 2-player games, Reverse is essentially a free extra turn!</p>
+            </div>
+
+            <div class="power-card pc-draw2">
+                <h4>📥 Draw Two (+2) Card <span class="points-badge">20 points</span></h4>
+                <p><strong>Effect:</strong> The next player must <strong>draw 2 cards</strong> from the draw pile AND
+                    <strong>lose their turn</strong>. They cannot play any card that turn.</p>
+                <p><strong>When to play:</strong> Match by color, or play on another Draw Two card of any color.</p>
+                <div class="warning-box">
+                    <strong>⚠️ No Stacking!</strong> According to official UNO rules, you <strong>CANNOT</strong> stack
+                    a +2 on top of another +2 to make the next player draw 4. The targeted player must draw 2 and lose
+                    their turn. No exceptions.
+                </div>
+                <p><strong>Strategy tip:</strong> This is your best defensive card against someone about to win. Force
+                    them to draw 2 cards and they're back in the game!</p>
+            </div>
+
+            <div class="power-card pc-wild">
+                <h4>🌈 Wild Card <span class="points-badge">50 points</span></h4>
+                <p><strong>Effect:</strong> Can be played on <strong>any card</strong>, regardless of color or number.
+                    When played, the player <strong>declares the next color</strong> (red, blue, green, or yellow). The
+                    next player must match this chosen color (unless they play another Wild).</p>
+                <p><strong>When to play:</strong> Anytime — there are no restrictions. Wild cards are always legal to
+                    play.</p>
+                <p><strong>Strategy tip:</strong> Choose the color you have the most of in your hand. This maximizes
+                    your chances of playing on subsequent turns. Save Wilds for when you're stuck with no color matches,
+                    or when you want to strategically switch to a color that benefits you.</p>
+            </div>
+
+            <div class="power-card pc-wd4">
+                <h4>💀 Wild Draw Four (+4) Card <span class="points-badge">50 points</span></h4>
+                <p><strong>Effect:</strong> The <strong>most powerful card</strong> in UNO! When played:</p>
+                <ol>
+                    <li>The player <strong>declares the next color</strong></li>
+                    <li>The next player must <strong>draw 4 cards</strong> from the draw pile</li>
+                    <li>The next player <strong>loses their turn</strong></li>
+                </ol>
+
+                <h3>The Legality Rule</h3>
+                <p>A Wild Draw Four can <strong>officially only be played when you have no cards matching the current
+                        active color</strong>. You may have cards of other colors, numbers, or other action cards —
+                    that's fine. The restriction is specifically about the <strong>active color</strong>.</p>
+
+                <h3>The Challenge Mechanic</h3>
+                <p>If a player suspects the Wild Draw Four was played <strong>illegally</strong> (the player had a card
+                    of the matching color), they can <strong>challenge</strong>:</p>
+                <ul>
+                    <li><strong>Challenge succeeds</strong> (player DID have a matching color card): The player who
+                        played the +4 must <strong>draw 4 cards</strong> instead. The challenger does NOT draw.</li>
+                    <li><strong>Challenge fails</strong> (player had NO matching color cards): The challenger draws
+                        <strong>6 cards</strong> (the original 4 + 2 penalty for a failed challenge) and loses their
+                        turn.</li>
+                </ul>
+
+                <div class="tip-box">
+                    <strong>💡 Bluffing is allowed!</strong> You CAN play a Wild Draw Four even if you have a matching
+                    color — you're just <strong>bluffing</strong>. If nobody challenges, you get away with it. This adds
+                    mind-game strategy to UNO!
+                </div>
+
+                <p><strong>Strategy tip:</strong> The +4 is devastating. Save it for critical moments — blocking someone
+                    about to win, or when you desperately need a color change. If you're bluffing, play confidently and
+                    hope they don't challenge!</p>
+            </div>
+        </div>
+
+        <!-- UNO Call -->
+        <div class="rule-section">
+            <h2>🎯 Calling UNO</h2>
+            <p>One of UNO's most iconic and important rules:</p>
+            <ul>
+                <li>When you play your <strong>second-to-last card</strong> (going down to 1 card), you <strong>must
+                        call "UNO!"</strong></li>
+                <li>You should call UNO <strong>as you play the card</strong>, not after</li>
+                <li>If another player catches you with 1 card <strong>without having called UNO</strong>, you must
+                    <strong>draw 2 penalty cards</strong></li>
+                <li>The catch must happen <strong>before the next player takes their turn</strong></li>
+                <li>If you are <strong>not caught</strong> before the next player plays, you're safe</li>
+            </ul>
+
+            <div class="tip-box">
+                <strong>💡 AI Bot Behavior:</strong> In offline mode, Easy bots sometimes "forget" to call UNO (30%
+                chance), Medium bots always remember, and Hard bots always call UNO plus watch for your mistakes!
+            </div>
+        </div>
+
+        <!-- Winning & Scoring -->
+        <div class="rule-section">
+            <h2>🏆 Winning & Scoring</h2>
+            <p>The first player to play <strong>all their cards</strong> wins the round. The winner earns points based
+                on the cards remaining in all other players' hands:</p>
+
+            <table class="scoring-table">
+                <thead>
+                    <tr>
+                        <th>Card Type</th>
+                        <th>Points</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🔢 Number Cards (0-9)</td>
+                        <td><strong>Face Value</strong></td>
+                        <td>A "7" is worth 7 points, a "0" is worth 0</td>
+                    </tr>
+                    <tr>
+                        <td>⛔ Skip</td>
+                        <td><strong>20 pts</strong></td>
+                        <td>Each Skip left in opponents' hands</td>
+                    </tr>
+                    <tr>
+                        <td>🔄 Reverse</td>
+                        <td><strong>20 pts</strong></td>
+                        <td>Each Reverse left in opponents' hands</td>
+                    </tr>
+                    <tr>
+                        <td>📥 Draw Two (+2)</td>
+                        <td><strong>20 pts</strong></td>
+                        <td>Each +2 left in opponents' hands</td>
+                    </tr>
+                    <tr>
+                        <td>🌈 Wild</td>
+                        <td><strong>50 pts</strong></td>
+                        <td>Most valuable card to hold at game end</td>
+                    </tr>
+                    <tr>
+                        <td>💀 Wild Draw Four (+4)</td>
+                        <td><strong>50 pts</strong></td>
+                        <td>Most valuable card to hold at game end</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="tip-box">
+                <strong>💡 Scoring Strategy:</strong> Try to get rid of high-point cards (Wilds = 50 points!) early in
+                the round, even if they're strategically useful. Getting caught with them at the end costs you dearly!
+            </div>
+        </div>
+
+        <!-- Common Misconceptions -->
+        <div class="rule-section">
+            <h2>❌ Common Rule Misconceptions</h2>
+            <p>Many house rules are popular but <strong>NOT in the official UNO rules</strong>:</p>
+
+            <div class="warning-box">
+                <strong>❌ Stacking +2 on +2:</strong> You CANNOT play a +2 when someone plays a +2 on you to make the
+                next player draw 4. You must draw 2 and lose your turn. This has been confirmed by Mattel (UNO's
+                manufacturer) multiple times.
+            </div>
+
+            <div class="warning-box">
+                <strong>❌ Stacking +4 on +4:</strong> Same rule — you cannot stack Wild Draw Fours. The targeted player
+                draws 4 and loses their turn. No chain reactions.
+            </div>
+
+            <div class="warning-box">
+                <strong>❌ Draw Until You Can Play:</strong> You only draw <strong>ONE card</strong>. If it can be
+                played, you MAY play it. If not, your turn ends. You do NOT keep drawing until you find a playable card.
+            </div>
+
+            <div class="warning-box">
+                <strong>❌ Playing Multiple Cards:</strong> You can only play <strong>ONE card per turn</strong>, even if
+                you have multiple valid plays.
+            </div>
+
+            <div class="tip-box">
+                <strong>💡 UNO Arena uses official rules!</strong> Our game engine enforces all the proper official
+                rules listed above. This ensures fair, consistent gameplay for everyone.
+            </div>
+        </div>
+
+        <!-- Strategy Guide -->
+        <div class="rule-section">
+            <h2>🧠 Strategy Tips</h2>
+            <ol>
+                <li><strong>Count cards:</strong> Pay attention to how many cards each opponent has. Target players
+                    close to winning with +2 and Skip cards.</li>
+                <li><strong>Control color:</strong> Switch to colors where you have the most cards. This gives you more
+                    playable options.</li>
+                <li><strong>Save Wilds:</strong> Don't waste Wild cards early. They're your safety net when you're
+                    stuck.</li>
+                <li><strong>Dump high-value cards:</strong> Get rid of +2, Skip, Reverse, and especially Wilds early to
+                    minimize the points you'll give opponents if they win.</li>
+                <li><strong>Watch for UNO calls:</strong> If an opponent has 2 cards and plays one without calling UNO,
+                    challenge them immediately for a 2-card penalty!</li>
+                <li><strong>Bluff with +4:</strong> Playing a Wild Draw Four when you have matching colors is risky but
+                    can be devastating. The 6-card penalty for a failed challenge deters most challengers.</li>
+                <li><strong>Reverse in 2-player:</strong> In 2-player games, Reverse is essentially a Skip — giving you
+                    an extra turn. Use it aggressively!</li>
+                <li><strong>Track colors:</strong> If an opponent keeps drawing, they likely don't have the current
+                    active color. Keep playing that color to force them to keep drawing!</li>
+            </ol>
+        </div>
+
+        <!-- This Game's Features -->
+        <div class="rule-section">
+            <h2>🎮 UNO Arena Game Features</h2>
+            <ul>
+                <li>🌐 <strong>Online Multiplayer</strong> — Play with friends in real-time rooms</li>
+                <li>🤖 <strong>AI Opponents</strong> — 3 difficulty levels (Easy, Medium, Hard)</li>
+                <li>📡 <strong>Offline Mode</strong> — Full game works without internet</li>
+                <li>💬 <strong>In-Game Chat</strong> — Talk and send emoji reactions during games</li>
+                <li>🏆 <strong>Leaderboards</strong> — Climb the global rankings</li>
+                <li>🛒 <strong>Cosmetics Shop</strong> — Earn coins, buy card backs, avatars, themes</li>
+                <li>⚔️ <strong>Tournaments</strong> — Single-elimination bracket competitions</li>
+                <li>⏱️ <strong>Turn Timer</strong> — 30 seconds per turn to keep games fast</li>
+                <li>🎯 <strong>UNO Call System</strong> — Proper UNO call + challenge mechanics</li>
+                <li>📊 <strong>Stats Tracking</strong> — Wins, losses, games played, win rate</li>
+            </ul>
+            <div style="text-align:center;margin-top:20px">
+                <a href="/offline.html" class="btn btn-primary"
+                    style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;padding:12px 28px">🤖
+                    Play Offline Now</a>
+                <a href="/" class="btn btn-secondary"
+                    style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;padding:12px 28px;margin-left:10px">🎮
+                    Go to Lobby</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

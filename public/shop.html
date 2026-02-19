@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="UNO Arena Cosmetics Shop — Buy card backs, avatars, and themes with your earned coins.">
+    <title>Shop — UNO Arena</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+    <nav class="nav">
+        <a class="nav-brand" href="/">
+            <div class="logo-icon">🂡</div>
+            UNO Arena
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">🎮 Lobby</a></li>
+            <li><a href="/offline.html">🤖 Offline</a></li>
+            <li><a href="/rules.html">📖 Rules</a></li>
+            <li><a href="/leaderboard.html">🏆 Leaderboard</a></li>
+            <li><a href="/shop.html" class="active">🛒 Shop</a></li>
+            <li><a href="/tournament.html">⚔️ Tournaments</a></li>
+        </ul>
+        <div class="nav-user">
+            <div class="coins"><span>🪙</span> <span id="coin-count">0</span></div>
+        </div>
+    </nav>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🛒 Cosmetics Shop</h1>
+            <p>Customize your game with card backs, avatars, and themes</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="filterShop('all', this)">All</button>
+            <button class="tab-btn" onclick="filterShop('card_back', this)">🂡 Card Backs</button>
+            <button class="tab-btn" onclick="filterShop('avatar', this)">😎 Avatars</button>
+            <button class="tab-btn" onclick="filterShop('theme', this)">🎨 Themes</button>
+        </div>
+
+        <div class="grid-4" id="shop-grid">
+            <div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1">Loading shop...</div>
+        </div>
+
+        <div class="panel" style="margin-top:32px">
+            <div class="panel-header">
+                <h3>📦 Your Inventory</h3>
+            </div>
+            <div class="grid-4" id="inventory-grid">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">No items yet</div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top:20px">
+            <div class="panel-header">
+                <h3>📜 Transaction History</h3>
+            </div>
+            <div id="transaction-list" style="max-height:300px;overflow-y:auto">
+                <div style="text-align:center;padding:20px;color:var(--text-muted)">No transactions yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('uno_token');
+        let allItems = [];
+        let ownedIds = new Set();
+        let currentFilter = 'all';
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            toast.innerHTML = `<span>${icons[type]}</span> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
+        }
+
+        async function apiFetch(url, opts = {}) {
+            const headers = { 'Content-Type': 'application/json', ...opts.headers };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(url, { ...opts, headers });
+            return res.json();
+        }
+
+        async function loadShop() {
+            try {
+                const [shopData, invData] = await Promise.all([
+                    apiFetch('/api/shop/items'),
+                    token ? apiFetch('/api/shop/inventory') : { items: [] },
+                ]);
+
+                allItems = shopData.items || [];
+                ownedIds = new Set((invData.items || []).map(i => i.id));
+                renderShop();
+                renderInventory(invData.items || []);
+            } catch (err) {
+                console.error('Shop load error:', err);
+            }
+        }
+
+        function filterShop(type, btn) {
+            currentFilter = type;
+            if (btn) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            renderShop();
+        }
+
+        function renderShop() {
+            const grid = document.getElementById('shop-grid');
+            const filtered = currentFilter === 'all' ? allItems : allItems.filter(i => i.type === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1">No items found</div>';
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => `
+        <div class="shop-item ${ownedIds.has(item.id) ? 'owned' : ''}">
+          <span class="item-icon">${item.image_key || '🎴'}</span>
+          <span class="item-name">${item.name}</span>
+          <span class="item-rarity ${item.rarity}">${item.rarity}</span>
+          <span style="font-size:0.8rem;color:var(--text-secondary)">${item.description}</span>
+          <span class="item-price">🪙 ${item.price}</span>
+          ${ownedIds.has(item.id)
+                    ? `<button class="btn btn-sm btn-success" onclick="equipItem('${item.id}')">Equip</button>`
+                    : `<button class="btn btn-sm btn-primary" onclick="buyItem('${item.id}')">Buy</button>`
+                }
+        </div>
+      `).join('');
+        }
+
+        function renderInventory(items) {
+            const grid = document.getElementById('inventory-grid');
+            if (items.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1">No items owned yet. Buy some from the shop!</div>';
+                return;
+            }
+            grid.innerHTML = items.map(item => `
+        <div class="shop-item owned">
+          <span class="item-icon">${item.image_key || '🎴'}</span>
+          <span class="item-name">${item.name}</span>
+          <span class="item-rarity ${item.rarity}">${item.rarity}</span>
+          <button class="btn btn-sm btn-success" onclick="equipItem('${item.id}')">Equip</button>
+        </div>
+      `).join('');
+        }
+
+        async function buyItem(itemId) {
+            if (!token) return showToast('Login to buy items', 'error');
+            try {
+                const data = await apiFetch('/api/shop/buy', { method: 'POST', body: JSON.stringify({ itemId }) });
+                if (data.success) {
+                    showToast(`Purchased ${data.item.name}! 🎉`, 'success');
+                    document.getElementById('coin-count').textContent = data.remainingCoins;
+                    ownedIds.add(itemId);
+                    renderShop();
+                    loadTransactions();
+                    // Reload inventory
+                    const invData = await apiFetch('/api/shop/inventory');
+                    renderInventory(invData.items || []);
+                }
+            } catch (err) {
+                showToast(err.message || 'Purchase failed', 'error');
+            }
+        }
+
+        async function equipItem(itemId) {
+            if (!token) return showToast('Login to equip items', 'error');
+            try {
+                const data = await apiFetch('/api/shop/equip', { method: 'POST', body: JSON.stringify({ itemId }) });
+                if (data.success) showToast('Item equipped! ✅', 'success');
+            } catch (err) {
+                showToast(err.message || 'Equip failed', 'error');
+            }
+        }
+
+        async function loadTransactions() {
+            if (!token) return;
+            try {
+                const data = await apiFetch('/api/shop/transactions');
+                const list = document.getElementById('transaction-list');
+                if (!data.transactions || data.transactions.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">No transactions yet</div>';
+                    return;
+                }
+                list.innerHTML = data.transactions.slice(0, 20).map(t => `
+          <div style="display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border-glass);font-size:0.85rem">
+            <span>${t.reason}</span>
+            <span style="color:${t.type === 'earn' ? 'var(--success)' : 'var(--danger)'}; font-weight:600">
+              ${t.type === 'earn' ? '+' : '-'}${t.amount} 🪙
+            </span>
+          </div>
+        `).join('');
+            } catch (err) {
+                console.error('Transactions error:', err);
+            }
+        }
+
+        // Init
+        if (token) {
+            apiFetch('/api/auth/profile')
+                .then(d => { if (d.user) document.getElementById('coin-count').textContent = d.user.coins; })
+                .catch(() => { });
+        }
+        loadShop();
+        loadTransactions();
+    </script>
+</body>
+
+</html>
