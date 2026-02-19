@@ -9,36 +9,23 @@ let turnStartedAt = null;
 
 const TURN_DURATION = 30; // seconds
 
+// ── Audio Helpers ───────────────────────────────────────
+function playSound(type) {
+    if (window.audioManager) window.audioManager.play(type);
+}
+
 // ── Card Display Helpers ────────────────────────────────
 function getCardSymbol(card) {
     if (!card) return '?';
     switch (card.type) {
         case 'number': return card.value;
-        case 'skip': return '⛔';
-        case 'reverse': return '🔄';
+        case 'skip': return '🚫';
+        case 'reverse': return '⇄';
         case 'draw_two': return '+2';
-        case 'wild': return '🌈';
+        case 'wild': return 'W';
         case 'wild_draw_four': return '+4';
         default: return '?';
     }
-}
-
-function getCardLabel(card) {
-    if (!card) return '';
-    switch (card.type) {
-        case 'number': return '';
-        case 'skip': return 'SKIP';
-        case 'reverse': return 'REVERSE';
-        case 'draw_two': return 'DRAW 2';
-        case 'wild': return 'WILD';
-        case 'wild_draw_four': return 'WILD +4';
-        default: return '';
-    }
-}
-
-function getActiveColor() {
-    if (!gameState) return null;
-    return gameState.chosenColor || gameState.topCard?.color || null;
 }
 
 function getCardColorClass(card) {
@@ -47,8 +34,64 @@ function getCardColorClass(card) {
     return card.color || '';
 }
 
+/**
+ * Generates the HTML for a card using the new CSS-only design
+ */
+function getCardHTML(card, extraClasses = '', onclick = '') {
+    const symbol = getCardSymbol(card);
+    const colorClass = getCardColorClass(card);
+    const typeClass = card.type;
+
+    return `
+    <div class="uno-card ${colorClass} ${extraClasses}" 
+         onclick="${onclick}"
+         data-id="${card.id}">
+      <div class="inner">
+        <div class="mark-corner tl">${symbol}</div>
+        <div class="oval">
+          <div class="mark-main">${symbol}</div>
+        </div>
+        <div class="mark-corner br">${symbol}</div>
+      </div>
+    </div>
+    `;
+}
+
+function getDiscardCardHTML(card) {
+    const symbol = getCardSymbol(card);
+    const colorClass = gameState.chosenColor || getCardColorClass(card);
+    // Randomize rotation slightly for natural feel
+    const rotation = (Math.random() * 10 - 5).toFixed(1);
+
+    return `
+    <div class="discard-card ${colorClass}" style="--r:${rotation}deg">
+      <div class="inner">
+        <div class="mark-corner tl">${symbol}</div>
+        <div class="oval">
+          <div class="mark-main">${symbol}</div>
+        </div>
+        <div class="mark-corner br">${symbol}</div>
+      </div>
+    </div>
+    `;
+}
+
+function getActiveColor() {
+    if (!gameState) return null;
+    return gameState.chosenColor || gameState.topCard?.color || null;
+}
+
 // ── Game State Handler ──────────────────────────────────
 function handleGameState(state) {
+    // Detect changes for sound effects
+    const prevTurn = gameState?.currentPlayer?.id;
+    const newTurn = state.currentPlayer?.id;
+
+    // Play turn sound if it just became my turn
+    if (newTurn === currentUser?.id && prevTurn !== currentUser?.id) {
+        playSound('turn');
+    }
+
     gameState = state;
 
     // Switch to game view
@@ -70,20 +113,30 @@ function renderOpponents() {
     const container = document.getElementById('opponents-area');
     const myId = currentUser?.id;
 
-    const opponents = gameState.playerCardCounts.filter(p => p.id !== myId);
+    // Ensure consistent order (rotate so I am at bottom, others clockwise)
+    const allPlayers = gameState.playerCardCounts;
+    const myIndex = allPlayers.findIndex(p => p.id === myId);
+
+    // Reorder array to put me last (so I'm "bottom"), then take the rest
+    // Actually for opponents area we just want everyone EXCEPT me
+    const opponents = allPlayers.filter(p => p.id !== myId);
 
     container.innerHTML = opponents.map(p => {
         const isCurrentTurn = gameState.currentPlayer && gameState.currentPlayer.id === p.id;
-        const cardBacks = Array(Math.min(p.cardCount, 15)).fill(0)
+        // Cap visual cards at 5 to prevent UI clutter
+        const visualCardCount = Math.min(p.cardCount, 5);
+        const cardBacks = Array(visualCardCount).fill(0)
             .map(() => `<div class="card-back-mini"></div>`).join('');
 
         return `
-      <div class="opponent ${isCurrentTurn ? 'active-turn' : ''}">
-        <span class="opponent-avatar">🎮</span>
-        <span class="opponent-name">${p.username}</span>
+      <div class="opponent ${isCurrentTurn ? 'active-turn' : ''}" id="opp-${p.id}">
+        <span class="opponent-avatar">${p.isBot ? '🤖' : '👤'}</span>
+        <div class="opponent-info" style="text-align:center; margin-top:4px">
+            <div style="font-weight:bold; font-size:0.9rem">${p.username}</div>
+            <div style="font-size:0.8rem; color:var(--text-secondary)">${p.cardCount} cards</div>
+        </div>
         <div class="opponent-cards">${cardBacks}</div>
-        <span style="font-size:0.75rem;color:var(--text-muted)">${p.cardCount} cards</span>
-        ${p.cardCount === 1 ? '<span style="font-size:0.7rem;color:var(--uno-red);font-weight:700">UNO!</span>' : ''}
+        ${p.cardCount === 1 ? '<span style="color:var(--uno-yellow);font-weight:900;animation:pulse 1s infinite">UNO!</span>' : ''}
       </div>
     `;
     }).join('');
@@ -93,42 +146,45 @@ function renderOpponents() {
 function renderDiscardPile() {
     if (!gameState || !gameState.topCard) return;
     const pile = document.getElementById('discard-pile');
-    const card = gameState.topCard;
-    const colorClass = gameState.chosenColor || getCardColorClass(card);
 
-    pile.innerHTML = `
-    <div class="discard-card ${colorClass}">
-      <div class="card-value">${getCardSymbol(card)}</div>
-      <div class="card-type">${getCardLabel(card)}</div>
-    </div>
-    ${gameState.chosenColor ? `<div class="color-indicator" style="background:var(--uno-${gameState.chosenColor})"></div>` : ''}
-  `;
+    // Check if new card (optimization)
+    const currentHTML = pile.innerHTML;
+    const newHTML = getDiscardCardHTML(gameState.topCard);
+
+    // Only re-render if changed to allow animation to play
+    // Simple check: compare symbol/type/color
+    // Ideally we'd compare IDs but topCard object might be new ref
+
+    pile.innerHTML = newHTML;
 
     // Update the active color banner
     renderActiveColorBanner();
 }
 
-// ── Active Color Banner (always visible) ────────────────
+// ── Active Color Banner ─────────────────────────────────
 function renderActiveColorBanner() {
     let banner = document.getElementById('active-color-banner');
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'active-color-banner';
         banner.className = 'active-color-banner';
-        // Insert after center-area or discard-pile
         const centerArea = document.querySelector('.center-area');
         if (centerArea) centerArea.after(banner);
-        else document.querySelector('.game-board')?.appendChild(banner);
     }
 
     const color = getActiveColor();
     if (color) {
-        const colorNames = { red: '🔴 RED', blue: '🔵 BLUE', green: '🟢 GREEN', yellow: '🟡 YELLOW' };
-        const colorHex = { red: '#ef4444', blue: '#3b82f6', green: '#22c55e', yellow: '#eab308' };
-        banner.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${colorHex[color]};border:2px solid #fff;vertical-align:middle;margin-right:6px"></span> Active Color: <strong>${colorNames[color] || color.toUpperCase()}</strong>`;
-        banner.style.background = `${colorHex[color]}22`;
-        banner.style.borderColor = `${colorHex[color]}66`;
+        const colorNames = { red: 'RED', blue: 'BLUE', green: 'GREEN', yellow: 'YELLOW' };
+        const colorHex = { red: '#ff3344', blue: '#3388ff', green: '#33ff66', yellow: '#ffcc00' };
+
+        banner.innerHTML = `
+            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${colorHex[color]};margin-right:8px;box-shadow:0 0 10px ${colorHex[color]}"></span>
+            ${colorNames[color] || color.toUpperCase()}
+        `;
+        banner.style.color = colorHex[color];
+        banner.style.borderColor = colorHex[color];
         banner.style.display = 'flex';
+        banner.style.boxShadow = `0 0 20px ${colorHex[color]}40`;
     } else {
         banner.style.display = 'none';
     }
@@ -137,27 +193,35 @@ function renderActiveColorBanner() {
 // ── Render Deck Count ───────────────────────────────────
 function renderDeckCount() {
     if (!gameState) return;
-    document.getElementById('deck-count').textContent = gameState.deckRemaining;
+    // We removed the text count from inside the deck to make it cleaner
+    // But we can add it back as a small badge if needed or just keep the visual pile
+    // For now let's update a tooltip or separate counter if it exists
+    const deckCountEl = document.getElementById('deck-count');
+    if (deckCountEl) deckCountEl.textContent = gameState.deckRemaining;
 }
 
 // ── Update Direction Indicator ──────────────────────────
 function updateDirectionIndicator() {
     if (!gameState) return;
     const indicator = document.getElementById('direction-indicator');
-    indicator.textContent = gameState.direction === 1 ? '↻' : '↺';
+    if (gameState.direction === 1) {
+        indicator.classList.remove('reverse');
+    } else {
+        indicator.classList.add('reverse');
+    }
 }
 
 // ── Update Turn Indicator ───────────────────────────────
 function updateTurnIndicator() {
     if (!gameState) return;
     const isMyTurn = gameState.currentPlayer && gameState.currentPlayer.id === currentUser?.id;
-    const turnIndicator = document.getElementById('your-turn-indicator');
+    const handArea = document.querySelector('.player-hand-area');
     const unoBtn = document.getElementById('uno-btn');
 
     if (isMyTurn) {
-        turnIndicator.classList.remove('hidden');
+        handArea.classList.add('turn-active-glow');
     } else {
-        turnIndicator.classList.add('hidden');
+        handArea.classList.remove('turn-active-glow');
     }
 
     // Show UNO button when player has 2 cards (about to have 1)
@@ -175,21 +239,12 @@ function renderHand(hand) {
     const isMyTurn = gameState?.currentPlayer?.id === currentUser?.id;
 
     container.innerHTML = playerHand.map((card, i) => {
-        const colorClass = getCardColorClass(card);
         const canPlay = isMyTurn && isCardPlayable(card);
         const selected = selectedCard === card.id ? 'selected' : '';
-        // Always show unplayable state: dim cards that can't be played on your turn
-        const playable = (isMyTurn && !canPlay) ? 'unplayable' : (!isMyTurn ? 'waiting' : '');
+        // "disabled" class for dimming
+        const extraClasses = `${selected} ${(!canPlay && isMyTurn ? 'disabled' : '')}`;
 
-        return `
-      <div class="uno-card ${colorClass} ${selected} ${playable} ${canPlay ? 'glow-playable' : ''}"
-           data-card-id="${card.id}" 
-           onclick="selectCard('${card.id}', ${i})"
-           title="${card.color || 'wild'} ${card.type} ${card.value ?? ''}">
-        <div class="card-value">${getCardSymbol(card)}</div>
-        <div class="card-type">${getCardLabel(card)}</div>
-      </div>
-    `;
+        return getCardHTML(card, extraClasses, `selectCard('${card.id}', ${i})`);
     }).join('');
 
     updateTurnIndicator();
@@ -213,17 +268,27 @@ function isCardPlayable(card) {
 // ── Select / Play Card ──────────────────────────────────
 function selectCard(cardId, index) {
     const isMyTurn = gameState?.currentPlayer?.id === currentUser?.id;
-    if (!isMyTurn) return;
+    if (!isMyTurn) {
+        playSound('error');
+        return;
+    }
 
     const card = playerHand.find(c => c.id === cardId);
     if (!card) return;
 
     if (!isCardPlayable(card)) {
+        playSound('error');
         showToast('Cannot play this card', 'error');
         return;
     }
 
-    // If card already selected, play it
+    playSound('click');
+
+    // If card already selected or click-to-play enabled (implied), play it
+    // For smoother UX, let's just make it double-click or simple click if we want fast play
+    // But sticking to select->play for safety. Actually, let's do click-to-play if already selected OR just play immediately
+    // Ideally: Click once to lift (select), click again to play.
+
     if (selectedCard === cardId) {
         playSelectedCard(card);
         return;
@@ -234,19 +299,27 @@ function selectCard(cardId, index) {
 }
 
 function playSelectedCard(card) {
+    // Wild handling
     if (card.type === 'wild' || card.type === 'wild_draw_four') {
         pendingWildCard = card;
         document.getElementById('color-picker').classList.remove('hidden');
+        playSound('alert');
         return;
     }
 
+    playSound('play');
+    // Animate visual removal immediately for responsiveness
+    // (We'll rely on server update to canonicalize state)
     socket.emit('game:play', { cardId: card.id, chosenColor: null });
     selectedCard = null;
+
+    // Optimistic UI update could go here
 }
 
 function chooseColor(color) {
     document.getElementById('color-picker').classList.add('hidden');
     if (pendingWildCard) {
+        playSound('play');
         socket.emit('game:play', { cardId: pendingWildCard.id, chosenColor: color });
         pendingWildCard = null;
         selectedCard = null;
@@ -257,9 +330,14 @@ function chooseColor(color) {
 function drawCard() {
     const isMyTurn = gameState?.currentPlayer?.id === currentUser?.id;
     if (!isMyTurn) {
+        playSound('error');
         showToast('Not your turn!', 'error');
         return;
     }
+
+    playSound('draw');
+    // Add visual animation of card flying to hand here if possible
+
     socket.emit('game:draw');
     selectedCard = null;
 }
@@ -267,6 +345,8 @@ function drawCard() {
 // ── Call UNO ────────────────────────────────────────────
 function callUno() {
     socket.emit('game:uno');
+    playSound('uno');
+    showEventOverlay('UNO!');
     showToast('UNO! 🎯', 'success');
 }
 
@@ -275,18 +355,25 @@ function startTurnTimer() {
     clearInterval(turnTimerInterval);
     turnStartedAt = Date.now();
 
+    const fill = document.getElementById('timer-fill');
+
     turnTimerInterval = setInterval(() => {
         const elapsed = (Date.now() - turnStartedAt) / 1000;
         const remaining = Math.max(0, TURN_DURATION - elapsed);
         const pct = (remaining / TURN_DURATION) * 100;
 
-        const fill = document.getElementById('timer-fill');
         const seconds = document.getElementById('timer-seconds');
 
         if (fill) {
             fill.style.width = pct + '%';
-            fill.className = 'timer-fill' +
-                (remaining < 5 ? ' danger' : remaining < 10 ? ' warning' : '');
+            if (remaining < 5 && !fill.classList.contains('danger')) {
+                fill.className = 'timer-fill danger';
+                // playSound('tick'); // Optional ticking sound
+            } else if (remaining < 10 && remaining >= 5) {
+                fill.className = 'timer-fill warning';
+            } else if (remaining >= 10) {
+                fill.className = 'timer-fill';
+            }
         }
         if (seconds) seconds.textContent = Math.ceil(remaining);
 
@@ -305,9 +392,12 @@ function handleGameOver(data) {
     const isWinner = data.winner === currentUser?.id;
     title.textContent = isWinner ? '🎉 You Win!' : '😢 Game Over';
 
+    if (isWinner) playSound('win');
+    else playSound('error');
+
     const winnerName = data.state?.playerCardCounts?.find(p => p.id === data.winner)?.username || 'Unknown';
 
-    let html = `<p style="margin-bottom:16px;font-size:1.1rem;color:var(--text-secondary)">
+    let html = `<p style="margin-bottom:16px;font-size:1.5rem;color:var(--text-secondary)">
     Winner: <strong style="color:var(--uno-yellow)">${winnerName}</strong>
   </p>`;
 
@@ -334,6 +424,15 @@ function handleGameOver(data) {
     modal.classList.remove('hidden');
 }
 
+// ── Helpers ─────────────────────────────────────────────
+function showEventOverlay(text) {
+    const el = document.createElement('div');
+    el.className = 'event-overlay';
+    el.innerText = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
+
 // ── Floating Emoji ──────────────────────────────────────
 function showFloatingEmoji(emoji) {
     const el = document.createElement('div');
@@ -342,22 +441,26 @@ function showFloatingEmoji(emoji) {
     position: fixed;
     top: 50%;
     left: 50%;
-    font-size: 3rem;
+    font-size: 4rem;
     z-index: 1000;
     pointer-events: none;
+    text-shadow: 0 0 20px rgba(255,255,255,0.5);
     animation: floatUp 1.5s ease forwards;
   `;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1500);
 }
 
-// Add float animation
-const floatStyle = document.createElement('style');
-floatStyle.textContent = `
-  @keyframes floatUp {
-    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
-    50% { opacity: 1; transform: translate(-50%, -100%) scale(1.2); }
-    100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
-  }
-`;
-document.head.appendChild(floatStyle);
+// Add float animation keyframes if not present
+if (!document.getElementById('anim-styles')) {
+    const s = document.createElement('style');
+    s.id = 'anim-styles';
+    s.textContent = `
+      @keyframes floatUp {
+        0% { opacity: 0; transform: translate(-50%, -40%) scale(0.5); }
+        20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        100% { opacity: 0; transform: translate(-50%, -150%) scale(1); }
+      }
+    `;
+    document.head.appendChild(s);
+}

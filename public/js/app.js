@@ -98,14 +98,20 @@ function connectSocket() {
 }
 
 // ── Room Management ─────────────────────────────────────
+function playSound(type) {
+    if (window.audioManager) window.audioManager.play(type);
+}
+
 function createRoom() {
     if (!socket) return showToast('Not connected', 'error');
+    playSound('click');
     socket.emit('room:create', { maxPlayers: 4 });
     isHost = true;
 }
 
 function createBotGame() {
     if (!socket) return showToast('Not connected', 'error');
+    playSound('click');
     socket.emit('room:create', { maxPlayers: 4 });
     isHost = true;
     // Wait for room to be created then add a bot
@@ -118,11 +124,13 @@ function createBotGame() {
 
 function addBot(difficulty) {
     if (!socket) return showToast('Not connected', 'error');
+    playSound('click');
     socket.emit('room:add_bot', { difficulty: difficulty || 'medium' });
 }
 
 function removeBot(botId) {
     if (!socket) return showToast('Not connected', 'error');
+    playSound('click');
     socket.emit('room:remove_bot', { botId });
 }
 
@@ -130,18 +138,21 @@ function joinRoomByCode() {
     if (!socket) return showToast('Not connected', 'error');
     const code = document.getElementById('join-code-input').value.trim().toUpperCase();
     if (!code) return showToast('Enter a room code', 'error');
+    playSound('click');
     socket.emit('room:join', { code });
     isHost = false;
 }
 
 function joinRoom(code) {
     if (!socket) return showToast('Not connected', 'error');
+    playSound('click');
     socket.emit('room:join', { code });
     isHost = false;
 }
 
 function leaveRoom() {
     if (socket) socket.emit('room:leave');
+    playSound('click');
     currentRoomCode = null;
     isHost = false;
     showLobby();
@@ -149,6 +160,7 @@ function leaveRoom() {
 
 function startGame() {
     if (socket) socket.emit('game:start');
+    playSound('play');
 }
 
 // ── UI Rendering ────────────────────────────────────────
