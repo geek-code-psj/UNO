@@ -37,6 +37,11 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
 });
 
+// SPA Fallback - Serve index.html for any other requests (Express 5 syntax)
+app.get('/{*any}', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
 // ── Game Rooms ──────────────────────────────────────────
 const rooms = new Map(); // code -> GameRoom
 
@@ -115,6 +120,18 @@ io.on('connection', (socket) => {
         // Override bot UNO handler
         room._onBotUno = (bot) => {
             io.to(code).emit('game:uno_called', { player: bot.username });
+        };
+
+        // Override bot Challenge Action (Accepting a WD4 or Challenging)
+        room._onBotChallengeAction = (bot, action, result) => {
+            if (action === 'accept') {
+                // Bot accepted the +4
+                io.to(code).emit('game:wd4_accepted', {
+                    player: bot.username,
+                    drawnCount: 4
+                });
+                io.to(code).emit('game:state', room.getGameState());
+            }
         };
 
         rooms.set(code, room);
@@ -302,7 +319,26 @@ io.on('connection', (socket) => {
         socket.emit('game:hand', { hand: room.getPlayerHand(currentUser.id) });
 
         // Broadcast updated state (card counts changed)
-        io.to(currentRoom).emit('game:state', room.getGameState());
+        // If this was an acceptance of WD4, emit special event too?
+        if (result.action === 'accept_draw_4') {
+            io.to(currentRoom).emit('game:wd4_accepted', {
+                player: currentUser.username,
+                drawnCount: 4
+            });
+        }
+
+        // Check for win (rare case where drawing caused win? No, usually drawing adds cards)
+        // But if engine supports winning on draw (e.g. forced play?), check it.
+        if (result.state.gameOver) {
+            io.to(currentRoom).emit(ROOM_EVENTS.GAME_OVER, {
+                winner: result.state.winner,
+                scores: result.state.scores,
+                state: result.state,
+            });
+            broadcastRoomList();
+        } else {
+            io.to(currentRoom).emit('game:state', room.getGameState());
+        }
     });
 
     // ── Game: Call UNO ──────────────────────────────────
@@ -338,6 +374,44 @@ io.on('connection', (socket) => {
                 targetSocket.emit('game:hand', { hand: room.getPlayerHand(targetId) });
             }
             io.to(currentRoom).emit('game:state', room.getGameState());
+        } else {
+            socket.emit(ROOM_EVENTS.ERROR, { error: result.error });
+        }
+    });
+
+    // ── Game: Challenge Wild Draw 4 ─────────────────────
+    socket.on(ROOM_EVENTS.CHALLENGE_WD4, () => {
+        if (!currentRoom) return;
+        const room = rooms.get(currentRoom);
+        if (!room) return;
+
+        const result = room.challenge(currentUser.id);
+        if (result.success) {
+            // result.challengeResult contains { winner, penalized, count }
+            io.to(currentRoom).emit('game:wd4_challenged', {
+                challenger: currentUser.username,
+                result: result.challengeResult
+            });
+
+            // Send updated hand to penalized player (could be source or challenger)
+            const penalizedId = result.challengeResult.penalized;
+            const pSocket = getPlayerSocket(penalizedId);
+            if (pSocket) {
+                pSocket.emit('game:hand', { hand: room.getPlayerHand(penalizedId) });
+            }
+
+            // If the challenger lost, they drew cards, so update their hand too (handled above if pSocket matches)
+
+            if (result.state.gameOver) {
+                io.to(currentRoom).emit(ROOM_EVENTS.GAME_OVER, {
+                    winner: result.state.winner,
+                    scores: result.state.scores,
+                    state: result.state,
+                });
+                broadcastRoomList();
+            } else {
+                io.to(currentRoom).emit('game:state', room.getGameState());
+            }
         } else {
             socket.emit(ROOM_EVENTS.ERROR, { error: result.error });
         }

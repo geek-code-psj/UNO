@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── Custom Theme (Tailwind v4 CSS-first config) ── */
+@theme {
+  /* Colors */
+  --color-bg-primary: #050510;
+  --color-bg-secondary: #0a0a1a;
+  --color-uno-red: #ff3344;
+  --color-uno-blue: #3388ff;
+  --color-uno-green: #33ff66;
+  --color-uno-yellow: #ffcc00;
+  --color-accent-purple: #bd00ff;
+
+  /* Fonts */
+  --font-sans: 'Outfit', sans-serif;
+
+  /* Custom backgrounds */
+  --background-image-gradient-purple: linear-gradient(135deg, #bd00ff, #3388ff);
+  --background-image-gradient-dark: linear-gradient(145deg, #1a1a2e, #0a0a10);
+
+  /* Animations */
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}
+
+/* ── Global Reset ── */
+:root {
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  background-color: #050510;
+  color: white;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ── Reusable utility classes ── */
+.glass {
+  background: rgba(20, 20, 40, 0.65);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-hover:hover {
+  background: rgba(40, 40, 70, 0.65);
+}
+
+/* ── Card color backgrounds ── */
+.bg-uno-red {
+  background: linear-gradient(145deg, #ff3344, #aa0011);
+}
+
+.bg-uno-blue {
+  background: linear-gradient(145deg, #3388ff, #0044aa);
+}
+
+.bg-uno-green {
+  background: linear-gradient(145deg, #33ff66, #00aa33);
+}
+
+.bg-uno-yellow {
+  background: linear-gradient(145deg, #ffcc00, #cc9900);
+}
+
+.bg-uno-wild {
+  background: linear-gradient(135deg, #ff3344, #3388ff, #33ff66, #ffcc00);
+}
+
+/* Card gradients matching Tailwind classes used in components */
+.from-red-500.to-red-700 {
+  background: linear-gradient(145deg, #ef4444, #b91c1c);
+}
+
+.from-blue-500.to-blue-700 {
+  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+}
+
+.from-green-400.to-green-600 {
+  background: linear-gradient(145deg, #4ade80, #16a34a);
+}
+
+.from-yellow-400.to-yellow-600 {
+  background: linear-gradient(145deg, #facc15, #ca8a04);
+}
+
+/* bg-gradient-purple utility */
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #bd00ff, #3388ff);
+}

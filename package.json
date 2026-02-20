@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "postinstall": "cd client && npm install",
     "cap:init": "npx cap sync",
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android",

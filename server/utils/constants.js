@@ -13,6 +13,16 @@ module.exports = {
         WILD_DRAW_FOUR: 'wild_draw_four',
     },
 
+    // Card scoring values
+    CARD_VALUES: {
+        number: (val) => val,
+        skip: 20,
+        reverse: 20,
+        draw_two: 20,
+        wild: 50,
+        wild_draw_four: 50,
+    },
+
     // Game settings
     GAME: {
         MIN_PLAYERS: 2,
@@ -51,6 +61,7 @@ module.exports = {
         DRAW_CARD: 'game:draw',
         CALL_UNO: 'game:uno',
         CHALLENGE_UNO: 'game:challenge_uno',
+        CHALLENGE_WD4: 'game:challenge_wd4',
         CHOOSE_COLOR: 'game:choose_color',
         TURN_TIMEOUT: 'game:timeout',
         GAME_OVER: 'game:over',

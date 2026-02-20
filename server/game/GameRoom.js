@@ -142,6 +142,24 @@ class GameRoom {
         return this.engine.challengeUno(challengerId, targetId);
     }
 
+    /** Challenge the previous play (Wild Draw 4) */
+    challenge(playerId) {
+        if (!this.engine) return { success: false, error: 'No game in progress' };
+
+        const result = this.engine.challenge(playerId);
+        // Note: Engine handles the logic. Result contains { winner, penalized, count }
+        if (result.success) {
+            this._clearTurnTimer();
+            if (result.state.gameOver) {
+                this._endGame(result.state.winner);
+            } else {
+                this._startTurnTimer();
+                this._scheduleBotTurn();
+            }
+        }
+        return result;
+    }
+
     /** Add a chat message */
     addChatMessage(playerId, username, message) {
         // Basic moderation
@@ -168,15 +186,24 @@ class GameRoom {
         this._clearTurnTimer();
         if (!this.engine || this.engine.state !== GAME_STATE.PLAYING) return;
 
-        const currentPlayer = this.engine.getCurrentPlayer();
-        // Don't set timer for bots — they handle themselves via _scheduleBotTurn
-        if (this.bots.has(currentPlayer.id)) return;
+        // If pending action, the timer is for the TARGET player to respond
+        let targetId = null;
+        if (this.engine.pendingAction) {
+            targetId = this.engine.pendingAction.targetPlayerId;
+        } else {
+            targetId = this.engine.getCurrentPlayer().id;
+        }
+
+        // Don't set timer for bots
+        if (this.bots.has(targetId)) return;
 
         this.turnTimerId = setTimeout(() => {
             if (this.engine && this.engine.state === GAME_STATE.PLAYING) {
-                const result = this.engine.handleTimeout(currentPlayer.id);
+                // If pending action timeout -> Auto Accept (Draw)
+                // If normal turn timeout -> Auto Draw
+                const result = this.engine.handleTimeout(targetId);
                 if (result) {
-                    this._onTurnTimeout(currentPlayer, result);
+                    this._onTurnTimeout({ id: targetId }, result);
                 }
                 this._startTurnTimer();
                 this._scheduleBotTurn();
@@ -198,19 +225,52 @@ class GameRoom {
     /** Schedule a bot move if it's a bot's turn */
     _scheduleBotTurn() {
         if (!this.engine || this.engine.state !== GAME_STATE.PLAYING) return;
-        const currentPlayer = this.engine.getCurrentPlayer();
-        const bot = this.bots.get(currentPlayer.id);
+
+        let botId = null;
+        let isChallengeResponse = false;
+
+        if (this.engine.pendingAction) {
+            botId = this.engine.pendingAction.targetPlayerId;
+            isChallengeResponse = true;
+        } else {
+            botId = this.engine.getCurrentPlayer().id;
+        }
+
+        const bot = this.bots.get(botId);
         if (!bot) return; // Not a bot's turn
 
         const thinkTime = bot.getThinkTime();
         this.botTimerId = setTimeout(() => {
-            this._executeBotTurn(bot);
+            if (isChallengeResponse) {
+                this._executeBotChallengeResponse(bot);
+            } else {
+                this._executeBotTurn(bot);
+            }
         }, thinkTime);
+    }
+
+    /** Execute Bot Response to WD4 */
+    _executeBotChallengeResponse(bot) {
+        if (!this.engine || !this.engine.pendingAction) return;
+        if (this.engine.pendingAction.targetPlayerId !== bot.id) return;
+
+        // For now, bots always be safe and just draw (accept)
+        // To challenge: this.challenge(bot.id)
+        // To accept: this.drawCard(bot.id)
+
+        const result = this.drawCard(bot.id);
+        if (result.success) {
+            // Notify room of bot action?
+            // The drawCard/challenge logic updates state.
+            // We need to trigger the broadcast in GameRoom hooks
+            this._onBotChallengeAction(bot, 'accept', result);
+        }
     }
 
     /** Execute the bot's turn */
     _executeBotTurn(bot) {
         if (!this.engine || this.engine.state !== GAME_STATE.PLAYING) return;
+        if (this.engine.pendingAction) return; // Wait for pending action
         if (this.engine.getCurrentPlayer().id !== bot.id) return;
 
         const hand = this.engine.getPlayerHand(bot.id);
@@ -238,6 +298,10 @@ class GameRoom {
     /** Called when a bot plays — override in socket handler */
     _onBotMove(bot, move, result) {
         // Overridden by server/index.js to broadcast via Socket.IO
+    }
+
+    _onBotChallengeAction(bot, action, result) {
+        // Overridden
     }
 
     /** Called when a bot calls UNO — override in socket handler */
@@ -277,6 +341,10 @@ class GameRoom {
                 if (this.bots.has(player.id)) continue; // Skip bots
                 const isWinner = player.id === winnerId;
                 const reward = isWinner ? REWARDS.WIN_GAME : REWARDS.LOSE_GAME;
+
+                // Score rewards? 
+                const score = this.engine.scores[player.id] || 0;
+                // Maybe extra coins for score? Keeping simple for now.
 
                 db.prepare(`
           UPDATE users SET

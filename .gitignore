@@ -1,5 +1,10 @@
 # Dependencies
 node_modules/
+client/node_modules/
+
+# Built frontend (Vite output — served by server in prod, not committed)
+public/index.html
+public/assets/
 
 # Database
 data/

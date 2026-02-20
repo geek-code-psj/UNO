@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Main Node.js Server (API + Socket.IO + Serves Frontend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Redis for session/room state (optional but good practice)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+# Define Volumes (if needed for persistent data)
+volumes:
+  redis_data:
