@@ -3,8 +3,8 @@ import { useGameStore } from '../store/gameStore';
 
 export default function Lobby() {
     const {
-        user, isConnected, connect, createRoom, joinRoom, addBot,
-        removeBot, startGame, leaveRoom, room, error, toast
+        user, isConnected, connect, createRoom, createVsBotRoom, joinRoom, addBot,
+        removeBot, startGame, leaveRoom, room, rooms, error, toast
     } = useGameStore();
     const [roomCode, setRoomCode] = useState('');
     const [codeInput, setCodeInput] = useState('');
@@ -145,11 +145,7 @@ export default function Lobby() {
 
                 <button
                     id="vs-bot-btn"
-                    onClick={() => {
-                        createRoom();
-                        // Room creation is async via socket; bot will be added once room state arrives
-                        // We listen via room state — a separate useEffect or the user can add bot in the waiting room
-                    }}
+                    onClick={createVsBotRoom}
                     className="flex flex-col items-center justify-center gap-2 p-5 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 active:translate-y-0 transition-all"
                 >
                     <span className="text-3xl">🤖</span>
@@ -184,9 +180,28 @@ export default function Lobby() {
                 {/* Left: Rooms / placeholder */}
                 <div className="lg:col-span-2">
                     <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-widest">Public Rooms</h3>
-                    <div className="glass rounded-xl p-10 text-center border-dashed border-2 border-white/10">
-                        <p className="text-gray-500">No public rooms right now</p>
-                        <p className="text-gray-600 text-sm mt-1">Create one to invite friends!</p>
+                    <div className="space-y-3">
+                        {rooms && rooms.length > 0 ? (
+                            rooms.map(r => (
+                                <div key={r.code} className="glass p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-lg">{r.hostName}'s Room</span>
+                                        <span className="text-xs text-gray-400">{r.playerCount}/{r.maxPlayers} Players</span>
+                                    </div>
+                                    <button
+                                        onClick={() => joinRoom(r.code)}
+                                        className="bg-uno-green/20 text-uno-green px-4 py-2 rounded-lg font-bold hover:bg-uno-green hover:text-white transition"
+                                    >
+                                        JOIN
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="glass rounded-xl p-10 text-center border-dashed border-2 border-white/10">
+                                <p className="text-gray-500">No public rooms right now</p>
+                                <p className="text-gray-600 text-sm mt-1">Create one to invite friends!</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

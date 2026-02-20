@@ -94,8 +94,8 @@ export const useGameStore = create((set, get) => ({
             setTimeout(() => set({ error: null }), 3000);
         });
 
-        // Room list broadcast (we ignore it here; handle in Lobby component if needed)
-        socket.on('room:list', () => { });
+        // Room list broadcast
+        socket.on('room:list', (list) => set({ rooms: list }));
 
         set({ socket });
     },
@@ -108,6 +108,19 @@ export const useGameStore = create((set, get) => ({
 
     // ── Room Actions ─────────────────────────────────────
     createRoom: () => get().socket?.emit('room:create'),
+    createVsBotRoom: () => {
+        const socket = get().socket;
+        if (!socket) return;
+
+        socket.emit('room:create');
+
+        // Listen once for the next room:state to automatically add a bot
+        socket.once('room:state', () => {
+            setTimeout(() => {
+                get().addBot('medium');
+            }, 500); // Small delay to ensure server processed room entry
+        });
+    },
     joinRoom: (code) => get().socket?.emit('room:join', { code }),
     leaveRoom: () => {
         get().socket?.emit('room:leave');

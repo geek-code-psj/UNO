@@ -173,10 +173,23 @@ export default function Game() {
             <div className="flex-none pt-20 pb-4 px-4 flex justify-center gap-6 flex-wrap">
                 {opponents.map(p => {
                     const isCurrent = gameState.currentPlayer?.id === p.id;
+                    const canBeChallenged = p.cardCount === 1; // Simplification: assume they didn't call if they have 1 card
+
                     return (
                         <div key={p.id} className={`flex flex-col items-center gap-1 transition-all duration-300 ${isCurrent ? 'scale-110' : ''}`}>
-                            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-lg bg-black/40 border-2 ${isCurrent ? 'border-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.5)] animate-pulse' : 'border-white/10'}`}>
-                                {p.isBot ? '🤖' : p.username?.[0]?.toUpperCase()}
+                            <div className="relative">
+                                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-lg bg-black/40 border-2 ${isCurrent ? 'border-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.5)] animate-pulse' : 'border-white/10'}`}>
+                                    {p.isBot ? '🤖' : p.username?.[0]?.toUpperCase()}
+                                </div>
+                                {canBeChallenged && (
+                                    <button
+                                        onClick={() => challengeUno(p.id)}
+                                        className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-white/20 shadow-lg animate-bounce"
+                                        title="Challenge UNO!"
+                                    >
+                                        ⚔️
+                                    </button>
+                                )}
                             </div>
                             <span className="text-xs font-medium text-gray-300 max-w-[80px] truncate">{p.username}</span>
                             <div className="flex -space-x-2">
@@ -196,13 +209,13 @@ export default function Game() {
                 {/* Active Color Indicator */}
                 {activeColor && (
                     <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${activeColor === 'red' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                            activeColor === 'blue' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                                activeColor === 'green' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
-                                    'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                        activeColor === 'blue' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                            activeColor === 'green' ? 'bg-green-500/10 border-green-500/30 text-green-400' :
+                                'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
                         }`}>
                         <span className={`w-2.5 h-2.5 rounded-full ${activeColor === 'red' ? 'bg-red-500' :
-                                activeColor === 'blue' ? 'bg-blue-500' :
-                                    activeColor === 'green' ? 'bg-green-500' : 'bg-yellow-500'
+                            activeColor === 'blue' ? 'bg-blue-500' :
+                                activeColor === 'green' ? 'bg-green-500' : 'bg-yellow-500'
                             }`} />
                         Active: {activeColor}
                     </div>

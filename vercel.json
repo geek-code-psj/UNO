@@ -1,59 +1,13 @@
 {
     "version": 2,
-    "builds": [
+    "rewrites": [
         {
-            "src": "public/**",
-            "use": "@vercel/static"
+            "source": "/api/(.*)",
+            "destination": "/server/index.js"
         },
         {
-            "src": "api/**/*.js",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/api/$1"
-        },
-        {
-            "src": "/css/(.*)",
-            "dest": "/public/css/$1"
-        },
-        {
-            "src": "/js/(.*)",
-            "dest": "/public/js/$1"
-        },
-        {
-            "src": "/manifest.json",
-            "dest": "/public/manifest.json"
-        },
-        {
-            "src": "/sw.js",
-            "dest": "/public/sw.js"
-        },
-        {
-            "src": "/offline.html",
-            "dest": "/public/offline.html"
-        },
-        {
-            "src": "/rules.html",
-            "dest": "/public/rules.html"
-        },
-        {
-            "src": "/leaderboard.html",
-            "dest": "/public/leaderboard.html"
-        },
-        {
-            "src": "/shop.html",
-            "dest": "/public/shop.html"
-        },
-        {
-            "src": "/tournament.html",
-            "dest": "/public/tournament.html"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/public/index.html"
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }

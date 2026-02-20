@@ -1,24 +1,25 @@
 import React, { useEffect } from 'react';
+import { useGameStore } from './store/gameStore';
 import Navbar from './components/Navbar';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
-import { useGameStore } from './store/gameStore';
 
 export default function App() {
-  const { gameState, room, connect } = useGameStore();
+  const { gameState, connect } = useGameStore();
 
   useEffect(() => {
     connect();
-  }, []); // Initialize socket once on mount
+  }, []);
 
-  // Show game only when an active game is in progress
-  const showGame = gameState && gameState.state === 'playing';
+  // Show game when game is actively being played 
+  // (gameState exists AND either no .state field OR state is 'playing')
+  const isPlaying = gameState && (gameState.state === 'playing' || !gameState.state || gameState.currentPlayer);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-white font-sans">
-      {!showGame && <Navbar />}
+    <div className="min-h-screen text-white font-sans" style={{ background: '#050510' }}>
+      {!isPlaying && <Navbar />}
       <main>
-        {showGame ? <Game /> : <Lobby />}
+        {isPlaying ? <Game /> : <Lobby />}
       </main>
     </div>
   );
